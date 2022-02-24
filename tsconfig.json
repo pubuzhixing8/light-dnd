@@ -3,6 +3,16 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
+    "paths": {
+      "core": [
+        "dist/core/core",
+        "dist/core"
+      ],
+      "triton": [
+        "dist/triton/triton",
+        "dist/triton"
+      ]
+    },
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
