@@ -13,11 +13,11 @@ import { getAutoScrollDirection, getAutoScrollContainers, handleContainerScroll,
 })
 export class TriDraggableDirective implements AfterViewInit {
     @HostListener('mousedown', ['$event'])
-    mouseDownHandle(event: MouseEvent) {
+    mousedownHandle(event: MouseEvent) {
         let dragging = false;
         const defaultCursor = document.body.style.cursor;
         const autoScrollContainers = getAutoScrollContainers(this.scrollDispatcher, this.elementRef.nativeElement);
-        let currentAutoScrollContainer : HTMLElement | null = null;
+        let currentAutoScrollContainer: HTMLElement | null = null;
         let autoScrollDirection: ScrollingDirection | null = null;
         this.ngZone.runOutsideAngular(() => {
             const interval$ = interval(20).subscribe(() => {
@@ -29,7 +29,7 @@ export class TriDraggableDirective implements AfterViewInit {
                     handleWindowScroll(window, autoScrollDirection);
                 }
             });
-            const mouseMove$ = fromEvent<MouseEvent>(document, `mousemove`).subscribe(e => {
+            const mousemove$ = fromEvent<MouseEvent>(document, `mousemove`).subscribe(e => {
                 if (!dragging) {
                     this.triDragStart.emit(event);
                     dragging = true;
@@ -48,18 +48,27 @@ export class TriDraggableDirective implements AfterViewInit {
                     autoScrollDirection = getAutoScrollDirection(e, window);
                 }
             });
-            fromEvent<MouseEvent>(document, `mouseup`)
-                .pipe(take(1))
-                .subscribe(e => {
-                    mouseMove$.unsubscribe();
-                    interval$.unsubscribe();
-                    if (dragging) {
-                        this.triDrop.emit(e);
-                        this.triDragEnd.emit(e);
-                        document.body.style.cursor = defaultCursor;
-                        document.body.classList.remove('dragging');
-                    }
-                });
+            const mouseup$ = fromEvent<MouseEvent>(document, `mouseup`).pipe(take(1)).subscribe(e => {
+                mousemove$.unsubscribe();
+                interval$.unsubscribe();
+                // keydown$.unsubscribe();
+                if (dragging) {
+                    this.triDrop.emit(e);
+                    this.triDragEnd.emit(e);
+                    document.body.style.cursor = defaultCursor;
+                    document.body.classList.remove('dragging');
+                }
+            });
+            // const keydown$ = fromEvent<KeyboardEvent>(this.elementRef.nativeElement, `keydown`).subscribe(e => {
+            //     if (e.key === 'Escape' && dragging) {
+            //         mouseup$.unsubscribe();
+            //         mousemove$.unsubscribe();
+            //         interval$.unsubscribe();
+            //         document.body.style.cursor = defaultCursor;
+            //         document.body.classList.remove('dragging');
+            //         this.triDragEnd.emit();
+            //     }
+            // });
         });
     }
 
