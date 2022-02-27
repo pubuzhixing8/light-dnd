@@ -1,6 +1,6 @@
 export enum ScrollingDirection {
-    top,
-    bottom,
-    left,
-    right
+    top = 'top',
+    bottom = 'buttom',
+    left = 'left',
+    right = 'right'
 }

@@ -44,7 +44,7 @@ export class TriDraggableDirective implements AfterViewInit {
                         currentAutoScrollContainer = container;
                     }
                 });
-                if (!autoScrollDirection) {
+                if (!currentAutoScrollContainer) {
                     autoScrollDirection = getAutoScrollDirection(e, window);
                 }
             });
