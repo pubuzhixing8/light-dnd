@@ -4,13 +4,11 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "core": [
-        "dist/core/core",
-        "dist/core"
+      "light-dnd": [
+        "packages/triton/src/public-api"
       ],
-      "triton": [
-        "dist/triton/triton",
-        "dist/triton"
+      "light-dnd/*": [
+        "packages/tritons/src/*"
       ]
     },
     "outDir": "./dist/out-tsc",

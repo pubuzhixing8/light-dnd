@@ -2,6 +2,7 @@ import { ScrollDispatcher } from "@angular/cdk/scrolling";
 import { AfterViewInit, Directive, ElementRef, EventEmitter, HostListener, NgZone, OnDestroy, Output } from "@angular/core";
 import { fromEvent, interval } from "rxjs";
 import { take } from 'rxjs/operators';
+import { ScrollingDirection } from "./constants";
 import { getAutoScrollDirection, getAutoScrollContainers, handleContainerScroll, handleWindowScroll } from "./scroll";
 
 @Directive({
@@ -74,12 +75,4 @@ export class TriDraggableDirective implements AfterViewInit {
 
     ngAfterViewInit(): void {
     }
-}
-
-
-export enum ScrollingDirection {
-    top,
-    bottom,
-    left,
-    right
 }
