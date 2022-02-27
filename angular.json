@@ -5,8 +5,8 @@
   },
   "version": 1,
   "newProjectRoot": "packages",
-  "packages": {
-    "drag-and-drop": {
+  "projects": {
+    "light-dnd": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,24 +17,24 @@
         }
       },
       "root": "",
-      "sourceRoot": "src",
+      "sourceRoot": "demo",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/drag-and-drop",
-            "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
+            "outputPath": "dist/light-dnd",
+            "index": "demo/index.html",
+            "main": "demo/main.ts",
+            "polyfills": "demo/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              "demo/favicon.ico",
+              "demo/assets"
             ],
             "styles": [
-              "src/styles.scss"
+              "demo/styles.scss"
             ],
             "scripts": []
           },
@@ -54,8 +54,8 @@
               ],
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
+                  "replace": "demo/environments/environment.ts",
+                  "with": "demo/environments/environment.prod.ts"
                 }
               ],
               "outputHashing": "all"
@@ -75,10 +75,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "drag-and-drop:build:production"
+              "browserTarget": "light-dnd:build:production"
             },
             "development": {
-              "browserTarget": "drag-and-drop:build:development"
+              "browserTarget": "light-dnd:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -86,23 +86,23 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "drag-and-drop:build"
+            "browserTarget": "light-dnd:build"
           }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "main": "demo/test.ts",
+            "polyfills": "demo/polyfills.ts",
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              "demo/favicon.ico",
+              "demo/assets"
             ],
             "styles": [
-              "src/styles.scss"
+              "demo/styles.scss"
             ],
             "scripts": []
           }
@@ -141,5 +141,5 @@
       }
     }
   },
-  "defaultProject": "drag-and-drop"
+  "defaultProject": "light-dnd"
 }
