@@ -5,4 +5,18 @@ import { Component } from "@angular/core";
     templateUrl: 'basic.component.html',
     styleUrls: ['basic.component.scss']
 })
-export class AppBasicComponent {}
+export class AppBasicComponent {
+    constructor() {}
+
+    triDragStart(event: MouseEvent) {
+        console.log('drag start');
+    }
+
+    triDragOver(event: MouseEvent) {
+        console.log('drag over');
+    }
+
+    triDragEnd(event: MouseEvent) {
+        console.log('drag end');
+    }
+}

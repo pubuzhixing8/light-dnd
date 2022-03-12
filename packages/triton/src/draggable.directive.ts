@@ -1,9 +1,12 @@
+import { GlobalPositionStrategy, Overlay, OverlayRef, PositionStrategy } from "@angular/cdk/overlay";
+import { ComponentPortal } from "@angular/cdk/portal";
 import { ScrollDispatcher } from "@angular/cdk/scrolling";
 import { AfterViewInit, Directive, ElementRef, EventEmitter, HostListener, Input, NgZone, Output } from "@angular/core";
 import { fromEvent, interval } from "rxjs";
 import { take } from 'rxjs/operators';
 import { ScrollingDirection } from "./constants";
 import { getAutoScrollDirection, getAutoScrollContainers, handleContainerScroll, handleWindowScroll } from "./scroll";
+import { TriSnapshotComponent } from "./snapshot.component";
 
 const TRIGGER_DRAG_THRESHOLD = 5;
 
@@ -17,7 +20,9 @@ const TRIGGER_DRAG_THRESHOLD = 5;
 export class TriDraggableDirective implements AfterViewInit {
     public target?: HTMLElement;
 
-    @Input() triGetTargetFn?: (origin: HTMLElement) => HTMLElement;
+    @Input() triGetTargetFn = (origin: HTMLElement) => {
+        return origin;
+    }
 
     @Input() triHasSnapshot = false;
 
@@ -28,6 +33,7 @@ export class TriDraggableDirective implements AfterViewInit {
         const autoScrollContainers = getAutoScrollContainers(this.scrollDispatcher, this.elementRef.nativeElement);
         let currentAutoScrollContainer: HTMLElement | null = null;
         let autoScrollDirection: ScrollingDirection | null = null;
+        let snapshotOverlayRef: OverlayRef | null = null;
         const start = [event.clientX, event.clientY];
         this.ngZone.runOutsideAngular(() => {
             const interval$ = interval(20).subscribe(() => {
@@ -58,9 +64,13 @@ export class TriDraggableDirective implements AfterViewInit {
                     if (this.target) {
                         this.target.classList.add(...['drag-and-drop-target', 'drag-and-drop-target-active']);
                     }
-                    if (this.triHasSnapshot) {
+                    if (this.triHasSnapshot && this.target) {
                         // 弹出 overlay
+                        snapshotOverlayRef = this.createSnapshot(this.target);
                     }
+                }
+                if (snapshotOverlayRef) {
+                    this.updatePosition(snapshotOverlayRef, event.clientX, event.clientY);
                 }
                 this.triDragOver.emit(e);
                 currentAutoScrollContainer = null;
@@ -86,6 +96,11 @@ export class TriDraggableDirective implements AfterViewInit {
                     if (this.target) {
                         this.target.classList.remove(...['drag-and-drop-target', 'drag-and-drop-target-active']);
                     }
+                    if (snapshotOverlayRef) {
+                        snapshotOverlayRef.detach();
+                        snapshotOverlayRef.dispose();
+                        snapshotOverlayRef = null;
+                    }
                 }
             });
             // const keydown$ = fromEvent<KeyboardEvent>(this.elementRef.nativeElement, `keydown`).subscribe(e => {
@@ -109,8 +124,31 @@ export class TriDraggableDirective implements AfterViewInit {
 
     @Output() triDrop: EventEmitter<MouseEvent> = new EventEmitter();
 
-    constructor(private ngZone: NgZone, private elementRef: ElementRef<HTMLElement>, private scrollDispatcher: ScrollDispatcher) { }
+    constructor(private ngZone: NgZone,
+        private elementRef: ElementRef<HTMLElement>,
+        private scrollDispatcher: ScrollDispatcher,
+        private overlay: Overlay) { }
 
     ngAfterViewInit(): void {
+    }
+
+    createSnapshot(target: HTMLElement) {
+        const globalPositionStrategy = this.overlay.position().global();
+        const overlayRef = this.overlay.create({
+            positionStrategy: globalPositionStrategy, // 位置策略
+            scrollStrategy: this.overlay.scrollStrategies.reposition(), // 滚动策略
+            hasBackdrop: false // 是否显示遮罩层
+        });
+        const componentRef = overlayRef.attach(new ComponentPortal(TriSnapshotComponent));
+        componentRef.instance.target = target;
+        componentRef.instance.isClone = false;
+        componentRef.changeDetectorRef.detectChanges();
+        return overlayRef;
+    }
+
+    updatePosition(overlayRef: OverlayRef, x: number, y: number) {
+        const globalPositionStrategy = overlayRef.getConfig().positionStrategy as GlobalPositionStrategy;
+        globalPositionStrategy.left(`${x}px`).top(`${y}px`);
+        overlayRef.updatePosition();
     }
 }
