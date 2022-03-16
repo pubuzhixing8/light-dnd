@@ -26,15 +26,19 @@ export class TriDraggableDirective implements AfterViewInit {
 
     @Input() triHasSnapshot = false;
 
+    @Input() triIsCloneSnapshot = true;
+
     @HostListener('mousedown', ['$event'])
-    mousedownHandle(event: MouseEvent) {
+    mousedownHandle(_event: MouseEvent) {
         let dragging = false;
         const defaultCursor = document.body.style.cursor;
         const autoScrollContainers = getAutoScrollContainers(this.scrollDispatcher, this.elementRef.nativeElement);
         let currentAutoScrollContainer: HTMLElement | null = null;
         let autoScrollDirection: ScrollingDirection | null = null;
         let snapshotOverlayRef: OverlayRef | null = null;
-        const start = [event.clientX, event.clientY];
+        let offsetX: number = 0;
+        let offsetY: number = 0;
+        const start = [_event.clientX, _event.clientY];
         this.ngZone.runOutsideAngular(() => {
             const interval$ = interval(20).subscribe(() => {
                 if (autoScrollDirection && currentAutoScrollContainer) {
@@ -54,23 +58,28 @@ export class TriDraggableDirective implements AfterViewInit {
                     }
                 }
                 if (!dragging) {
-                    this.triDragStart.emit(event);
+                    this.triDragStart.emit(e);
                     dragging = true;
                     document.body.style.cursor = 'grabbing';
                     document.body.classList.add('dragging');
                     if (this.triGetTargetFn) {
                         this.target = this.triGetTargetFn(this.elementRef.nativeElement);
+                        const targetRect = this.target.getBoundingClientRect();
+                        offsetX = targetRect.x - e.clientX;
+                        offsetY = targetRect.y - e.clientY;
                     }
-                    if (this.target) {
-                        this.target.classList.add(...['drag-and-drop-target', 'drag-and-drop-target-active']);
-                    }
+                    
                     if (this.triHasSnapshot && this.target) {
                         // 弹出 overlay
                         snapshotOverlayRef = this.createSnapshot(this.target);
                     }
+
+                    if (this.target) {
+                        this.target.classList.add(...['drag-and-drop-target', 'drag-and-drop-target-active']);
+                    }
                 }
                 if (snapshotOverlayRef) {
-                    this.updatePosition(snapshotOverlayRef, event.clientX, event.clientY);
+                    this.updatePosition(snapshotOverlayRef, e.clientX + offsetX, e.clientY + offsetY);
                 }
                 this.triDragOver.emit(e);
                 currentAutoScrollContainer = null;
@@ -141,7 +150,7 @@ export class TriDraggableDirective implements AfterViewInit {
         });
         const componentRef = overlayRef.attach(new ComponentPortal(TriSnapshotComponent));
         componentRef.instance.target = target;
-        componentRef.instance.isClone = false;
+        componentRef.instance.isClone = this.triIsCloneSnapshot;
         componentRef.changeDetectorRef.detectChanges();
         return overlayRef;
     }
