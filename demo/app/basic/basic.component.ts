@@ -27,13 +27,16 @@ export class AppBasicComponent {
         console.log('drag over');
     }
 
-    triDragEnd(event: MouseEvent) {
-        console.log('drag end');
+    triDrop(event: MouseEvent) {
         if (this.draggableElement) {
             let scrollTop = window.scrollY;
             this.draggableElement.nativeElement.style.left = `${event.clientX + this.offsetX}px`;
             this.draggableElement.nativeElement.style.top = `${event.clientY + this.offsetY + scrollTop}px`;
             this.draggableElement.nativeElement.style.transform = `none`;
         }
+    }
+
+    triDragEnd(event: MouseEvent | KeyboardEvent) {
+        console.log('drag end');
     }
 }
