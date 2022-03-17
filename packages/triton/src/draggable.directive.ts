@@ -1,20 +1,20 @@
-import { GlobalPositionStrategy, Overlay, OverlayRef, PositionStrategy } from "@angular/cdk/overlay";
+import { GlobalPositionStrategy, Overlay, OverlayRef } from "@angular/cdk/overlay";
 import { ComponentPortal } from "@angular/cdk/portal";
 import { ScrollDispatcher } from "@angular/cdk/scrolling";
 import { AfterViewInit, Directive, ElementRef, EventEmitter, HostListener, Input, NgZone, Output } from "@angular/core";
+import { AutoScrollConfig } from "./scroll";
 import { fromEvent, interval } from "rxjs";
 import { take } from 'rxjs/operators';
-import { ScrollingDirection } from "./constants";
-import { getAutoScrollDirection, getAutoScrollContainers, handleContainerScroll, handleWindowScroll } from "./scroll";
+import { getAutoScrollConfig, getAutoScrollContainers, handleContainerScroll, handleWindowScroll } from "./scroll";
 import { TriSnapshotComponent } from "./snapshot.component";
 
 const TRIGGER_DRAG_THRESHOLD = 5;
 
-
 @Directive({
     selector: '[triDraggable]',
     host: {
-        class: 'triton-draggable-origin'
+        class: 'triton-draggable-origin',
+        tabindex: '-1'
     }
 })
 export class TriDraggableDirective implements AfterViewInit {
@@ -34,25 +34,25 @@ export class TriDraggableDirective implements AfterViewInit {
         const defaultCursor = document.body.style.cursor;
         const autoScrollContainers = getAutoScrollContainers(this.scrollDispatcher, this.elementRef.nativeElement);
         let currentAutoScrollContainer: HTMLElement | null = null;
-        let autoScrollDirection: ScrollingDirection | null = null;
+        let autoScrollConfig: AutoScrollConfig | null = null;
         let snapshotOverlayRef: OverlayRef | null = null;
         let offsetX: number = 0;
         let offsetY: number = 0;
         const start = [_event.clientX, _event.clientY];
         this.ngZone.runOutsideAngular(() => {
             const interval$ = interval(20).subscribe(() => {
-                if (autoScrollDirection && currentAutoScrollContainer) {
-                    handleContainerScroll(currentAutoScrollContainer, autoScrollDirection);
+                if (autoScrollConfig && currentAutoScrollContainer) {
+                    handleContainerScroll(currentAutoScrollContainer, autoScrollConfig);
                     return;
                 }
-                if (autoScrollDirection) {
-                    handleWindowScroll(window, autoScrollDirection);
+                if (autoScrollConfig) {
+                    handleWindowScroll(window, autoScrollConfig);
                 }
             });
             const mousemove$ = fromEvent<MouseEvent>(document, `mousemove`).subscribe(e => {
                 if (!dragging) {
                     const end = [e.clientX, e.clientY];
-                    const maxOffset = Math.max(Math.abs(end[0] - start[0]), Math.abs(end[1] - start[0]));
+                    const maxOffset = Math.max(Math.abs(end[0] - start[0]), Math.abs(end[1] - start[1]));
                     if (maxOffset < TRIGGER_DRAG_THRESHOLD) {
                         return;
                     }
@@ -84,21 +84,21 @@ export class TriDraggableDirective implements AfterViewInit {
                 this.triDragOver.emit(e);
                 currentAutoScrollContainer = null;
                 autoScrollContainers.forEach((container) => {
-                    autoScrollDirection = getAutoScrollDirection(e, container);
-                    if (autoScrollDirection) {
+                    autoScrollConfig = getAutoScrollConfig(e, container);
+                    if (autoScrollConfig) {
                         currentAutoScrollContainer = container;
                     }
                 });
                 if (!currentAutoScrollContainer) {
-                    autoScrollDirection = getAutoScrollDirection(e, window);
+                    autoScrollConfig = getAutoScrollConfig(e, window);
                 }
             });
-            const mouseup$ = fromEvent<MouseEvent>(document, `mouseup`).pipe(take(1)).subscribe(e => {
+
+            // 结束拖拽
+            const endDrag = (e: MouseEvent | KeyboardEvent) => {
                 mousemove$.unsubscribe();
                 interval$.unsubscribe();
-                // keydown$.unsubscribe();
                 if (dragging) {
-                    this.triDrop.emit(e);
                     this.triDragEnd.emit(e);
                     document.body.style.cursor = defaultCursor;
                     document.body.classList.remove('dragging');
@@ -111,17 +111,22 @@ export class TriDraggableDirective implements AfterViewInit {
                         snapshotOverlayRef = null;
                     }
                 }
+            };
+
+            const mouseup$ = fromEvent<MouseEvent>(document, `mouseup`).pipe(take(1)).subscribe(e => {
+                if (dragging) {
+                    this.triDrop.emit(e);
+                }
+                endDrag(e);
+                keydown$.unsubscribe();
             });
-            // const keydown$ = fromEvent<KeyboardEvent>(this.elementRef.nativeElement, `keydown`).subscribe(e => {
-            //     if (e.key === 'Escape' && dragging) {
-            //         mouseup$.unsubscribe();
-            //         mousemove$.unsubscribe();
-            //         interval$.unsubscribe();
-            //         document.body.style.cursor = defaultCursor;
-            //         document.body.classList.remove('dragging');
-            //         this.triDragEnd.emit();
-            //     }
-            // });
+
+            const keydown$ = fromEvent<KeyboardEvent>(this.elementRef.nativeElement, `keydown`).subscribe(e => {
+                if (e.key === 'Escape' && dragging) {
+                    mouseup$.unsubscribe();
+                    endDrag(e);
+                }
+            });
         });
     }
 
@@ -129,7 +134,7 @@ export class TriDraggableDirective implements AfterViewInit {
 
     @Output() triDragOver: EventEmitter<MouseEvent> = new EventEmitter();
 
-    @Output() triDragEnd: EventEmitter<MouseEvent> = new EventEmitter();
+    @Output() triDragEnd: EventEmitter<MouseEvent | KeyboardEvent> = new EventEmitter();
 
     @Output() triDrop: EventEmitter<MouseEvent> = new EventEmitter();
 

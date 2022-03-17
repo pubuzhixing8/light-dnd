@@ -1,5 +1,11 @@
 import { ScrollDispatcher } from '@angular/cdk/scrolling';
+import { auditRules, ScrollAuditRule } from './audit-rule';
 import { ScrollingDirection } from './constants';
+
+export interface AutoScrollConfig {
+    direction: ScrollingDirection,
+    auditRule: ScrollAuditRule
+}
 
 export function getAutoScrollContainers(scrollDispatcher: ScrollDispatcher, draggableNativeElement: HTMLElement) {
     let scrollContainers: HTMLElement[] = [];
@@ -11,7 +17,9 @@ export function getAutoScrollContainers(scrollDispatcher: ScrollDispatcher, drag
     return scrollContainers;
 }
 
-export function getAutoScrollDirection(event: MouseEvent, container: HTMLElement | Window, auditOffset: number = 30) {
+
+
+export function getAutoScrollConfig(event: MouseEvent, container: HTMLElement | Window): AutoScrollConfig | null {
     let top = 0;
     let bottom = 0;
     if (container instanceof Window) {
@@ -21,29 +29,41 @@ export function getAutoScrollDirection(event: MouseEvent, container: HTMLElement
         top = rect.top;
         bottom = rect.bottom;
     }
-    if (event.y - auditOffset < top) {
-        return ScrollingDirection.top;
+    const topAuditRule = auditRules.find((rule) => {
+        return event.y - rule.audit < top;
+    });
+    if (topAuditRule) {
+        return {
+            direction: ScrollingDirection.top,
+            auditRule: topAuditRule
+        }
     }
-    if (event.y + auditOffset > bottom) {
-        return ScrollingDirection.bottom;
+    const bottomAuditRule = auditRules.find((rule) => {
+        return event.y + rule.audit > bottom;
+    });
+    if (bottomAuditRule) {
+        return {
+            direction: ScrollingDirection.bottom,
+            auditRule: bottomAuditRule
+        };
     }
     return null;
 }
 
-export function handleContainerScroll(container: HTMLElement, direction: ScrollingDirection, distance: number = 10) {
+export function handleContainerScroll(container: HTMLElement, scrollConfig: AutoScrollConfig) {
     let defultScrollTop = container.scrollTop;
     let scrollTop = 0;
     const scrollHeight = container.scrollHeight;
     const height = container.clientHeight;
 
-    if (direction === ScrollingDirection.top) {
-        scrollTop = defultScrollTop - distance;
+    if (scrollConfig.direction === ScrollingDirection.top) {
+        scrollTop = defultScrollTop - scrollConfig.auditRule.seed;
         if (scrollTop < 0) {
             scrollTop = 0;
         }
     }
-    if (direction === ScrollingDirection.bottom) {
-        scrollTop = defultScrollTop + distance;
+    if (scrollConfig.direction === ScrollingDirection.bottom) {
+        scrollTop = defultScrollTop + scrollConfig.auditRule.seed;
         if (scrollTop + height > scrollHeight) {
             scrollTop = scrollHeight - height;
         }
@@ -51,19 +71,19 @@ export function handleContainerScroll(container: HTMLElement, direction: Scrolli
     container.scrollTop = scrollTop;
 }
 
-export function handleWindowScroll(window: Window,direction: ScrollingDirection, distance: number = 10) {
+export function handleWindowScroll(window: Window, scrollConfig: AutoScrollConfig) {
     let scrollTop = window.scrollY;
     let scrollHeight = window.document.body.scrollHeight;
     const height = window.innerHeight;
 
-    if (direction === ScrollingDirection.top) {
-        scrollTop = scrollTop - 10;
+    if (scrollConfig.direction === ScrollingDirection.top) {
+        scrollTop = scrollTop - scrollConfig.auditRule.seed;
         if (scrollTop < 0) {
             scrollTop = 0;
         }
     }
-    if (direction === ScrollingDirection.bottom) {
-        scrollTop = scrollTop + 10;
+    if (scrollConfig.direction === ScrollingDirection.bottom) {
+        scrollTop = scrollTop + scrollConfig.auditRule.seed;
         if (scrollTop + height > scrollHeight) {
             scrollTop = scrollHeight - height;
         }
