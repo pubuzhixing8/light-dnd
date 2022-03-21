@@ -1,0 +1,6 @@
+<div class="inner-scroll-container" cdkScrollable>
+    <div class="inner-container">
+        <div class="draggable-element" style="top: 200px" #draggableElement triDraggable [triHasSnapshot]="true" [triHasSnapshot]="true" (triDragStart)="triDragStart($event)"
+            (triDragOver)="triDragOver($event)" (triDragEnd)="triDragEnd($event)" (triDrop)="triDrop($event)">I'm dragging</div>
+    </div>
+</div>

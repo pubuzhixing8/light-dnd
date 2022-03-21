@@ -3,13 +3,3 @@
     position: relative;
     background-color: #f3f3f3;
 }
-.draggable-element {
-    position: absolute;
-    background-color: red;
-    color: white;
-    padding: 5px;
-    cursor: grab;
-    left: 50vw;
-    top: 50vh;
-    transform:translate(-50%, -50%);
-}
