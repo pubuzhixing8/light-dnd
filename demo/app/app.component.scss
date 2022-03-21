@@ -1,1 +1,13 @@
+.draggable-element {
+    position: absolute;
+    background-color: red;
+    color: white;
+    padding: 5px;
+    cursor: grab;
+    left: 50vw;
+    top: 50vh;
+    transform: translate(-50%, -50%);
+}
+
 @import './basic/basic.component.scss';
+@import './inner-scroll/inner-scroll.component.scss';
